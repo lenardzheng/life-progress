@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>人生进度条 & 时间卡片 - Life Progress</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- html2canvas 用于生成图片下载 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between items-center p-4">
+
+  <!-- Main Container -->
+  <div class="w-full max-w-md my-auto">
+    <!-- Config Card -->
+    <div class="bg-slate-800 rounded-xl p-5 mb-6 shadow-xl border border-slate-700">
+      <h2 class="text-lg font-bold mb-4 text-emerald-400">📅 设置出生日期</h2>
+      <div class="flex gap-2">
+        <input type="date" id="birthdate" value="2000-01-01" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white w-full focus:outline-none focus:border-emerald-500">
+        <button onclick="calculate()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-4 py-2 rounded-lg transition">计算</button>
+      </div>
+    </div>
+
+    <!-- Exportable Image Card -->
+    <div id="capture-card" class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 shadow-2xl border border-slate-700/80">
+      <!-- Card Header -->
+      <div class="flex justify-between items-center mb-6 border-b border-slate-700/60 pb-4">
+        <div>
+          <h1 class="text-xl font-extrabold text-white">人生进度条</h1>
+          <p class="text-xs text-slate-400 mt-1">Life Progress & Stats</p>
+        </div>
+        <span class="text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full" id="age-tag">24.0 岁</span>
+      </div>
+
+      <!-- Main Progress Bar -->
+      <div class="mb-6">
+        <div class="flex justify-between text-sm mb-2">
+          <span class="text-slate-400">人生总进度 (按80岁算)</span>
+          <span class="font-bold font-mono text-emerald-400" id="progress-text">0.00%</span>
+        </div>
+        <div class="w-full bg-slate-900 rounded-full h-4 p-0.5 border border-slate-700">
+          <div id="progress-bar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Data Grid -->
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
+          <div class="text-xs text-slate-400">已度过天数</div>
+          <div class="text-lg font-bold font-mono text-white mt-0.5" id="days-passed">0</div>
+        </div>
+        <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
+          <div class="text-xs text-slate-400">剩余天数</div>
+          <div class="text-lg font-bold font-mono text-emerald-400 mt-0.5" id="days-left">0</div>
+        </div>
+        <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
+          <div class="text-xs text-slate-400">大约还能吃</div>
+          <div class="text-lg font-bold font-mono text-amber-400 mt-0.5" id="meals-left">0 顿饭</div>
+        </div>
+        <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
+          <div class="text-xs text-slate-400">大约还剩</div>
+          <div class="text-lg font-bold font-mono text-cyan-400 mt-0.5" id="weekends-left">0 个周末</div>
+        </div>
+      </div>
+
+      <!-- Quote -->
+      <div class="text-center pt-2 border-t border-slate-800">
+        <p class="text-xs text-slate-400 italic">"最好的种树时间是十年前，其次就是现在。"</p>
+      </div>
+    </div>
+
+    <!-- Action Button -->
+    <button onclick="downloadCard()" class="w-full mt-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90 text-slate-950 font-bold py-3 px-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+      保存分享卡片 (图片)
+    </button>
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-center text-xs text-slate-500 my-4">
+    <p>Free Online Tools: 
+      <a href="https://minifier.zxz1211.us.ci/" class="hover:underline text-slate-400">Minifier</a> | 
+      <a href="https://image.zxz1211.us.ci/" class="hover:underline text-slate-400">Image</a> | 
+      <a href="https://password.zxz1211.us.ci/" class="hover:underline text-slate-400">Password</a>
+    </p>
+  </footer>
+
+  <script>
+    function calculate() {
+      const birthStr = document.getElementById('birthdate').value;
+      if (!birthStr) return;
+
+      const birthDate = new Date(birthStr);
+      const now = new Date();
+      
+      // 假设寿命 80 岁
+      const targetAge = 80;
+      const deathDate = new Date(birthDate.getFullYear() + targetAge, birthDate.getMonth(), birthDate.getDate());
+
+      const totalMs = deathDate - birthDate;
+      const passedMs = now - birthDate;
+      const leftMs = deathDate - now;
+
+      // 进度百分比
+      let progress = (passedMs / totalMs) * 100;
+      progress = Math.min(Math.max(progress, 0), 100).toFixed(2);
+
+      const daysPassed = Math.floor(passedMs / (1000 * 60 * 60 * 24));
+      const daysLeft = Math.max(0, Math.floor(leftMs / (1000 * 60 * 60 * 24)));
+      const age = (daysPassed / 365.25).toFixed(1);
+      
+      const mealsLeft = (daysLeft * 3).toLocaleString();
+      const weekendsLeft = Math.floor(daysLeft / 7).toLocaleString();
+
+      // 更新 DOM
+      document.getElementById('age-tag').innerText = `${age} 岁`;
+      document.getElementById('progress-text').innerText = `${progress}%`;
+      document.getElementById('progress-bar').style.width = `${progress}%`;
+      document.getElementById('days-passed').innerText = daysPassed.toLocaleString();
+      document.getElementById('days-left').innerText = daysLeft.toLocaleString();
+      document.getElementById('meals-left').innerText = `${mealsLeft} 顿`;
+      document.getElementById('weekends-left').innerText = `${weekendsLeft} 个`;
+    }
+
+    function downloadCard() {
+      const card = document.getElementById('capture-card');
+      html2canvas(card, {
+        backgroundColor: null,
+        scale: 2 // 高清无损导出
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'life-progress.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    }
+
+    // 初始化计算
+    calculate();
+  </script>
+</body>
+</html>
